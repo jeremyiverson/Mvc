@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Mvc.ModelBinding;
 using Microsoft.AspNet.Mvc.Rendering;
 using Microsoft.AspNet.Razor.Runtime.TagHelpers;
@@ -47,6 +48,8 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
                 { nameof(Boolean), InputType.CheckBox.ToString().ToLowerInvariant() },
                 { nameof(Decimal), InputType.Text.ToString().ToLowerInvariant() },
                 { nameof(String), InputType.Text.ToString().ToLowerInvariant() },
+                { nameof(IFormFile), "file" },
+                { nameof(IFormFileCollection), "file" },
             };
 
         // Mapping from <input/> element's type to RFC 3339 date and time formats.
@@ -194,6 +197,11 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
 
             if (tagBuilder != null)
             {
+                if (inputType == "file" && inputTypeHint == nameof(IFormFileCollection))
+                {
+                    tagBuilder.Attributes.Add("multiple", "");
+                }
+
                 // This TagBuilder contains the one <input/> element of interest. Since this is not the "checkbox"
                 // special-case, output is a self-closing element no longer guaranteed.
                 output.MergeAttributes(tagBuilder);
@@ -374,6 +382,14 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
                 }
 
                 yield return "String";
+            }
+            else if (typeof(IFormFile).IsAssignableFrom(fieldType))
+            {
+                yield return nameof(IFormFile);
+            }
+            else if (typeof(IEnumerable<IFormFile>).IsAssignableFrom(fieldType))
+            {
+                yield return nameof(IFormFileCollection);
             }
             else if (fieldType.IsInterface())
             {

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Mvc.Core;
 using Microsoft.Framework.DependencyInjection;
 using Microsoft.Framework.Internal;
@@ -62,6 +63,8 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 { typeof(decimal).Name, DefaultEditorTemplates.DecimalTemplate },
                 { typeof(string).Name, DefaultEditorTemplates.StringTemplate },
                 { typeof(object).Name, DefaultEditorTemplates.ObjectTemplate },
+                { typeof(IFormFile).Name, DefaultEditorTemplates.FileInputTemplate },
+                { typeof(IFormFileCollection).Name, DefaultEditorTemplates.FileCollectionInputTemplate },
             };
 
         private ViewContext _viewContext;
@@ -167,6 +170,14 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 }
 
                 yield return "String";
+            }
+            else if (typeof(IFormFile).IsAssignableFrom(fieldType))
+            {
+                yield return nameof(IFormFile);
+            }
+            else if (typeof(IEnumerable<IFormFile>).IsAssignableFrom(fieldType))
+            {
+                yield return nameof(IFormFileCollection);
             }
             else if (fieldType.IsInterface())
             {

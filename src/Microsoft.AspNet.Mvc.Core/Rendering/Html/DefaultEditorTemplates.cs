@@ -374,6 +374,22 @@ namespace Microsoft.AspNet.Mvc.Rendering
             return GenerateTextBox(htmlHelper, inputType: "number");
         }
 
+        public static string FileInputTemplate(IHtmlHelper htmlHelper)
+        {
+            return GenerateTextBox(htmlHelper, inputType: "file");
+        }
+
+        public static string FileCollectionInputTemplate(IHtmlHelper htmlHelper)
+        {
+            var htmlAttributes = new Dictionary<string, object>()
+            {
+                { "multiple", "" }
+            };
+            htmlHelper.ViewData[HtmlAttributeKey] = htmlAttributes;
+
+            return FileInputTemplate(htmlHelper);
+        }
+
         private static void ApplyRfc3339DateFormattingIfNeeded(IHtmlHelper htmlHelper, string format)
         {
             if (htmlHelper.Html5DateRenderingMode != Html5DateRenderingMode.Rfc3339)
