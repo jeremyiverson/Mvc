@@ -12,6 +12,7 @@ using Microsoft.AspNet.Mvc.ModelBinding;
 using Microsoft.AspNet.Mvc.ModelBinding.Validation;
 using Microsoft.AspNet.Mvc.Rendering.Expressions;
 using Microsoft.Framework.Internal;
+using Microsoft.Framework.Logging;
 using Microsoft.Framework.WebEncoders;
 
 namespace Microsoft.AspNet.Mvc.Rendering
@@ -32,7 +33,8 @@ namespace Microsoft.AspNet.Mvc.Rendering
         private readonly ICompositeViewEngine _viewEngine;
 
         private ViewContext _viewContext;
-
+        private readonly ILogger _logger;
+        
         /// <summary>
         /// Initializes a new instance of the <see cref="HtmlHelper"/> class.
         /// </summary>
@@ -42,7 +44,8 @@ namespace Microsoft.AspNet.Mvc.Rendering
             [NotNull] IModelMetadataProvider metadataProvider,
             [NotNull] IHtmlEncoder htmlEncoder,
             [NotNull] IUrlEncoder urlEncoder,
-            [NotNull] IJavaScriptStringEncoder javaScriptStringEncoder)
+            [NotNull] IJavaScriptStringEncoder javaScriptStringEncoder,
+            [NotNull] ILoggerFactory loggerFactory)
         {
             _viewEngine = viewEngine;
             _htmlGenerator = htmlGenerator;
@@ -50,6 +53,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
             HtmlEncoder = htmlEncoder;
             UrlEncoder = urlEncoder;
             JavaScriptStringEncoder = javaScriptStringEncoder;
+            _logger = loggerFactory.CreateLogger<HtmlHelper>();
         }
 
         /// <inheritdoc />
@@ -479,6 +483,11 @@ namespace Microsoft.AspNet.Mvc.Rendering
             var viewEngineResult = _viewEngine.FindPartialView(ViewContext, partialViewName);
             if (!viewEngineResult.Success)
             {
+                _logger.LogError(
+                    "The partial view '{PartialViewName}' was not found. Searched locations: {SearchedViewLocations}", 
+                    partialViewName,
+                    viewEngineResult.SearchedLocations);
+                
                 var locations = string.Empty;
                 if (viewEngineResult.SearchedLocations != null)
                 {
@@ -489,6 +498,8 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 throw new InvalidOperationException(
                     Resources.FormatViewEngine_PartialViewNotFound(partialViewName, locations));
             }
+
+            _logger.LogVerbose("The partial view '{PartialViewName}' was found successfully.", partialViewName);
 
             var view = viewEngineResult.View;
             using (view as IDisposable)
