@@ -170,53 +170,38 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 }
 
                 yield return "String";
+                yield break;
             }
-            else if (fieldType.IsInterface())
+            else if (!fieldType.IsInterface())
             {
-                if (typeof(IEnumerable).IsAssignableFrom(fieldType))
-                {
-                    if (typeof(IEnumerable<IFormFile>).IsAssignableFrom(fieldType))
-                    {
-                        yield return nameof(IFormFileCollection);
-                    }
-
-                    yield return "Collection";
-                }
-                else if (typeof(IFormFile).IsAssignableFrom(fieldType))
-                {
-                    yield return nameof(IFormFile);
-                }
-
-                yield return "Object";
-            }
-            else
-            {
-                var isEnumerable = typeof(IEnumerable).IsAssignableFrom(fieldType);
-                if (typeof(IFormFile).IsAssignableFrom(fieldType))
-                {
-                    yield return nameof(IFormFile);
-                }
-                else if (typeof(IEnumerable<IFormFile>).IsAssignableFrom(fieldType))
-                {
-                    yield return nameof(IFormFileCollection);
-                }
-
+                var type = fieldType;
                 while (true)
                 {
-                    fieldType = fieldType.BaseType();
-                    if (fieldType == null)
+                    type = type.BaseType();
+                    if (type == null || type == typeof(Object))
                     {
                         break;
                     }
 
-                    if (isEnumerable && fieldType == typeof(Object))
-                    {
-                        yield return "Collection";
-                    }
-
-                    yield return fieldType.Name;
+                    yield return type.Name;
                 }
             }
+
+            if (typeof(IEnumerable).IsAssignableFrom(fieldType))
+            {
+                if (typeof(IEnumerable<IFormFile>).IsAssignableFrom(fieldType))
+                {
+                    yield return nameof(IFormFileCollection);
+                }
+
+                yield return "Collection";
+            }
+            else if (typeof(IFormFile).IsAssignableFrom(fieldType))
+            {
+                yield return nameof(IFormFile);
+            }
+
+            yield return "Object";
         }
 
         private static IHtmlHelper MakeHtmlHelper(ViewContext viewContext, ViewDataDictionary viewData)
