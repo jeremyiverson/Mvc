@@ -171,19 +171,20 @@ namespace Microsoft.AspNet.Mvc.Rendering
 
                 yield return "String";
             }
-            else if (typeof(IFormFile).IsAssignableFrom(fieldType))
-            {
-                yield return nameof(IFormFile);
-            }
-            else if (typeof(IEnumerable<IFormFile>).IsAssignableFrom(fieldType))
-            {
-                yield return nameof(IFormFileCollection);
-            }
             else if (fieldType.IsInterface())
             {
                 if (typeof(IEnumerable).IsAssignableFrom(fieldType))
                 {
+                    if (typeof(IEnumerable<IFormFile>).IsAssignableFrom(fieldType))
+                    {
+                        yield return nameof(IFormFileCollection);
+                    }
+
                     yield return "Collection";
+                }
+                else if (typeof(IFormFile).IsAssignableFrom(fieldType))
+                {
+                    yield return nameof(IFormFile);
                 }
 
                 yield return "Object";
@@ -191,6 +192,14 @@ namespace Microsoft.AspNet.Mvc.Rendering
             else
             {
                 var isEnumerable = typeof(IEnumerable).IsAssignableFrom(fieldType);
+                if (typeof(IFormFile).IsAssignableFrom(fieldType))
+                {
+                    yield return nameof(IFormFile);
+                }
+                else if (typeof(IEnumerable<IFormFile>).IsAssignableFrom(fieldType))
+                {
+                    yield return nameof(IFormFileCollection);
+                }
 
                 while (true)
                 {

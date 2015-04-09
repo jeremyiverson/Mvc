@@ -197,11 +197,6 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
 
             if (tagBuilder != null)
             {
-                if (inputType == "file" && inputTypeHint == nameof(IFormFileCollection))
-                {
-                    tagBuilder.Attributes.Add("multiple", "");
-                }
-
                 // This TagBuilder contains the one <input/> element of interest. Since this is not the "checkbox"
                 // special-case, output is a self-closing element no longer guaranteed.
                 output.MergeAttributes(tagBuilder);
@@ -279,13 +274,22 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
                 format = GetFormat(modelExplorer, inputTypeHint, inputType);
             }
 
+            object htmlAttributes = null;
+            if (inputType == "file" && inputTypeHint == nameof(IFormFileCollection))
+            {
+                htmlAttributes = new Dictionary<string, object>
+                {
+                    { "multiple", "multiple" }
+                };
+            }
+
             return Generator.GenerateTextBox(
                 ViewContext,
                 modelExplorer,
                 For.Name,
                 value: modelExplorer.Model,
                 format: format,
-                htmlAttributes: null);
+                htmlAttributes: htmlAttributes);
         }
 
         // Get a fall-back format based on the metadata.
@@ -383,19 +387,20 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
 
                 yield return "String";
             }
-            else if (typeof(IFormFile).IsAssignableFrom(fieldType))
-            {
-                yield return nameof(IFormFile);
-            }
-            else if (typeof(IEnumerable<IFormFile>).IsAssignableFrom(fieldType))
-            {
-                yield return nameof(IFormFileCollection);
-            }
             else if (fieldType.IsInterface())
             {
                 if (typeof(IEnumerable).IsAssignableFrom(fieldType))
                 {
+                    if (typeof(IEnumerable<IFormFile>).IsAssignableFrom(fieldType))
+                    {
+                        yield return nameof(IFormFileCollection);
+                    }
+
                     yield return "Collection";
+                }
+                else if (typeof(IFormFile).IsAssignableFrom(fieldType))
+                {
+                    yield return nameof(IFormFile);
                 }
 
                 yield return "Object";
@@ -403,6 +408,15 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
             else
             {
                 var isEnumerable = typeof(IEnumerable).IsAssignableFrom(fieldType);
+                if (typeof(IFormFile).IsAssignableFrom(fieldType))
+                {
+                    yield return nameof(IFormFile);
+                }
+                else if (typeof(IEnumerable<IFormFile>).IsAssignableFrom(fieldType))
+                {
+                    yield return nameof(IFormFileCollection);
+                }
+
                 while (true)
                 {
                     fieldType = fieldType.BaseType();

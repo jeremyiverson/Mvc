@@ -5,11 +5,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using Microsoft.AspNet.Mvc.Core;
 using Microsoft.AspNet.Mvc.ModelBinding;
 using Microsoft.Framework.DependencyInjection;
+using Microsoft.Framework.Internal;
 
 namespace Microsoft.AspNet.Mvc.Rendering
 {
@@ -374,20 +374,18 @@ namespace Microsoft.AspNet.Mvc.Rendering
             return GenerateTextBox(htmlHelper, inputType: "number");
         }
 
-        public static string FileInputTemplate(IHtmlHelper htmlHelper)
+        public static string FileInputTemplate([NotNull] IHtmlHelper htmlHelper)
         {
             return GenerateTextBox(htmlHelper, inputType: "file");
         }
 
-        public static string FileCollectionInputTemplate(IHtmlHelper htmlHelper)
+        public static string FileCollectionInputTemplate([NotNull] IHtmlHelper htmlHelper)
         {
-            var htmlAttributes = new Dictionary<string, object>()
-            {
-                { "multiple", "" }
-            };
-            htmlHelper.ViewData[HtmlAttributeKey] = htmlAttributes;
+            var htmlAttributes =
+                CreateHtmlAttributes(htmlHelper, className: "text-box single-line", inputType: "file");
+            htmlAttributes["multiple"] = "multiple";
 
-            return FileInputTemplate(htmlHelper);
+            return GenerateTextBox(htmlHelper, htmlHelper.ViewData.TemplateInfo.FormattedModelValue, htmlAttributes);
         }
 
         private static void ApplyRfc3339DateFormattingIfNeeded(IHtmlHelper htmlHelper, string format)
@@ -421,6 +419,11 @@ namespace Microsoft.AspNet.Mvc.Rendering
             var htmlAttributes =
                 CreateHtmlAttributes(htmlHelper, className: "text-box single-line", inputType: inputType);
 
+            return GenerateTextBox(htmlHelper, value, htmlAttributes);
+        }
+
+        private static string GenerateTextBox(IHtmlHelper htmlHelper, object value, object htmlAttributes)
+        {
             return htmlHelper.TextBox(
                 current: null,
                 value: value,
