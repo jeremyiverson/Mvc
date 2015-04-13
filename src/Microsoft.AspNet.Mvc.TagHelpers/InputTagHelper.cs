@@ -2,12 +2,12 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Mvc.ModelBinding;
 using Microsoft.AspNet.Mvc.Rendering;
+using Microsoft.AspNet.Mvc.Rendering.Internal;
 using Microsoft.AspNet.Razor.Runtime.TagHelpers;
 
 namespace Microsoft.AspNet.Mvc.TagHelpers
@@ -49,7 +49,7 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
                 { nameof(Decimal), InputType.Text.ToString().ToLowerInvariant() },
                 { nameof(String), InputType.Text.ToString().ToLowerInvariant() },
                 { nameof(IFormFile), "file" },
-                { nameof(IFormFileCollection), "file" },
+                { TemplateRenderer.IEnumerableOfIFormFileName, "file" },
             };
 
         // Mapping from <input/> element's type to RFC 3339 date and time formats.
@@ -275,7 +275,7 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
             }
 
             object htmlAttributes = null;
-            if (inputType == "file" && inputTypeHint == nameof(IFormFileCollection))
+            if (string.Equals(inputType, "file") && string.Equals(inputTypeHint, TemplateRenderer.IEnumerableOfIFormFileName))
             {
                 htmlAttributes = new Dictionary<string, object>
                 {
@@ -358,66 +358,13 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
             var fieldType = modelExplorer.ModelType;
             if (typeof(bool?) != fieldType)
             {
-                var underlyingType = Nullable.GetUnderlyingType(fieldType);
-                if (underlyingType != null)
-                {
-                    fieldType = underlyingType;
-                }
+                fieldType = Nullable.GetUnderlyingType(fieldType) ?? fieldType;
             }
 
-            yield return fieldType.Name;
-
-            if (fieldType == typeof(string))
+            foreach (string typeName in TemplateRenderer.GetTypeNames(modelExplorer, fieldType))
             {
-                // Nothing more to provide
-                yield break;
+                yield return typeName;
             }
-            else if (!modelExplorer.Metadata.IsComplexType)
-            {
-                // IsEnum is false for the Enum class itself
-                if (fieldType.IsEnum())
-                {
-                    // Same as fieldType.BaseType.Name in this case
-                    yield return "Enum";
-                }
-                else if (fieldType == typeof(DateTimeOffset))
-                {
-                    yield return "DateTime";
-                }
-
-                yield return "String";
-                yield break;
-            }
-            else if (!fieldType.IsInterface())
-            {
-                var type = fieldType;
-                while (true)
-                {
-                    type = type.BaseType();
-                    if (type == null || type == typeof(Object))
-                    {
-                        break;
-                    }
-
-                    yield return type.Name;
-                }
-            }
-
-            if (typeof(IEnumerable).IsAssignableFrom(fieldType))
-            {
-                if (typeof(IEnumerable<IFormFile>).IsAssignableFrom(fieldType))
-                {
-                    yield return nameof(IFormFileCollection);
-                }
-
-                yield return "Collection";
-            }
-            else if (typeof(IFormFile).IsAssignableFrom(fieldType))
-            {
-                yield return nameof(IFormFile);
-            }
-
-            yield return "Object";
         }
     }
 }

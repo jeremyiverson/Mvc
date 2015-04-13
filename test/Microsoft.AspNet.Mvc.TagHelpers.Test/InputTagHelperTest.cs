@@ -5,8 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
+using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Mvc.ModelBinding;
 using Microsoft.AspNet.Mvc.Rendering;
+using Microsoft.AspNet.Mvc.Rendering.Internal;
 using Microsoft.AspNet.Razor.Runtime.TagHelpers;
 using Microsoft.Framework.WebEncoders;
 using Moq;
@@ -645,6 +647,8 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
         [InlineData("uint16", null, "number")]
         [InlineData("UInt32", null, "number")]
         [InlineData("UInt64", null, "number")]
+        [InlineData(nameof(IFormFile), null, "file")]
+        [InlineData(TemplateRenderer.IEnumerableOfIFormFileName, null, "file")]
         public async Task ProcessAsync_CallsGenerateTextBox_AddsExpectedAttributes(
             string dataTypeName,
             string expectedFormat,
@@ -679,16 +683,25 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
                 metadataProvider: metadataProvider);
 
             var tagBuilder = new TagBuilder("input", new HtmlEncoder());
+
+            Dictionary<string, object> htmlAttributes = null;
+            if (string.Equals(dataTypeName, TemplateRenderer.IEnumerableOfIFormFileName))
+            {
+                htmlAttributes = new Dictionary<string, object>
+                {
+                    { "multiple", "multiple" }
+                };
+            }
             htmlGenerator
-                .Setup(mock => mock.GenerateTextBox(
-                    tagHelper.ViewContext,
-                    tagHelper.For.ModelExplorer,
-                    tagHelper.For.Name,
-                    null,                                   // value
-                    expectedFormat,
-                    null))                                  // htmlAttributes
-                .Returns(tagBuilder)
-                .Verifiable();
+            .Setup(mock => mock.GenerateTextBox(
+                tagHelper.ViewContext,
+                tagHelper.For.ModelExplorer,
+                tagHelper.For.Name,
+                null,                                   // value
+                expectedFormat,
+                htmlAttributes ?? null))                // htmlAttributes
+            .Returns(tagBuilder)
+            .Verifiable();
 
             // Act
             await tagHelper.ProcessAsync(context, output);

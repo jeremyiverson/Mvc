@@ -9,15 +9,17 @@ using System.IO;
 using System.Linq;
 using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Mvc.Core;
+using Microsoft.AspNet.Mvc.ModelBinding;
 using Microsoft.Framework.DependencyInjection;
 using Microsoft.Framework.Internal;
 
-namespace Microsoft.AspNet.Mvc.Rendering
+namespace Microsoft.AspNet.Mvc.Rendering.Internal
 {
-    internal class TemplateRenderer
+    public class TemplateRenderer
     {
         private static readonly string DisplayTemplateViewPath = "DisplayTemplates";
         private static readonly string EditorTemplateViewPath = "EditorTemplates";
+        public const string IEnumerableOfIFormFileName = "IEnumerable`IFormFile`";
 
         private static readonly Dictionary<string, Func<IHtmlHelper, string>> _defaultDisplayActions =
             new Dictionary<string, Func<IHtmlHelper, string>>(StringComparer.OrdinalIgnoreCase)
@@ -64,7 +66,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 { typeof(string).Name, DefaultEditorTemplates.StringTemplate },
                 { typeof(object).Name, DefaultEditorTemplates.ObjectTemplate },
                 { typeof(IFormFile).Name, DefaultEditorTemplates.FileInputTemplate },
-                { typeof(IFormFileCollection).Name, DefaultEditorTemplates.FileCollectionInputTemplate },
+                { IEnumerableOfIFormFileName, DefaultEditorTemplates.FileCollectionInputTemplate },
             };
 
         private ViewContext _viewContext;
@@ -144,19 +146,31 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 yield return templateHint;
             }
 
+            var fieldType = _viewData.ModelExplorer.ModelType;
+
             // We don't want to search for Nullable<T>, we want to search for T (which should handle both T and
             // Nullable<T>).
-            var modelType = _viewData.ModelExplorer.ModelType;
-            var fieldType = Nullable.GetUnderlyingType(modelType) ?? modelType;
+            fieldType = Nullable.GetUnderlyingType(fieldType) ?? fieldType;
 
-            yield return fieldType.Name;
+            foreach (string typeName in GetTypeNames(_viewData.ModelExplorer, fieldType))
+            {
+                yield return typeName;
+            }
+        }
+
+        public static IEnumerable<string> GetTypeNames(ModelExplorer modelExplorer, Type fieldType)
+        {
+            if (typeof(IEnumerable<IFormFile>) != fieldType)
+            {
+                yield return fieldType.Name;
+            }
 
             if (fieldType == typeof(string))
             {
                 // Nothing more to provide
                 yield break;
             }
-            else if (!metadata.IsComplexType)
+            else if (!modelExplorer.Metadata.IsComplexType)
             {
                 // IsEnum is false for the Enum class itself
                 if (fieldType.IsEnum())
@@ -178,7 +192,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 while (true)
                 {
                     type = type.BaseType();
-                    if (type == null || type == typeof(Object))
+                    if (type == null || type == typeof(object))
                     {
                         break;
                     }
@@ -191,12 +205,17 @@ namespace Microsoft.AspNet.Mvc.Rendering
             {
                 if (typeof(IEnumerable<IFormFile>).IsAssignableFrom(fieldType))
                 {
-                    yield return nameof(IFormFileCollection);
+                    yield return IEnumerableOfIFormFileName;
+
+                    if (typeof(IEnumerable<IFormFile>) == fieldType)
+                    {
+                        yield return fieldType.Name;
+                    }
                 }
 
                 yield return "Collection";
             }
-            else if (typeof(IFormFile).IsAssignableFrom(fieldType))
+            else if (typeof(IFormFile) != fieldType && typeof(IFormFile).IsAssignableFrom(fieldType))
             {
                 yield return nameof(IFormFile);
             }
