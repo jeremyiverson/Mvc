@@ -22,6 +22,9 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
             ValidatorProviders = new List<IClientModelValidatorProvider>(providers);
         }
 
+        /// <summary>
+        /// Gets a list of <see cref="IClientModelValidatorProvider"/>.
+        /// </summary>
         public IReadOnlyList<IClientModelValidatorProvider> ValidatorProviders { get; }
 
         /// <inheritdoc />

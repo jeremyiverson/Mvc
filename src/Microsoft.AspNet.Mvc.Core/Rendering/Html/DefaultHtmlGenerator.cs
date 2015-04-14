@@ -34,6 +34,12 @@ namespace Microsoft.AspNet.Mvc.Rendering
         /// <summary>
         /// Initializes a new instance of the <see cref="DefaultHtmlGenerator"/> class.
         /// </summary>
+        /// <param name="antiForgery">The <see cref="AntiForgery"/> instance which is used to generate anti-forgery 
+        /// tokens.</param>
+        /// <param name="optionsAccessor">The accessor for <see cref="MvcOptions"/>.</param>
+        /// <param name="metadataProvider">The <see cref="IModelMetadataProvider"/>.</param>
+        /// <param name="urlHelper">The <see cref="IUrlHelper"/>.</param>
+        /// <param name="htmlEncoder">The <see cref="IHtmlEncoder"/>.</param>
         public DefaultHtmlGenerator(
             [NotNull] AntiForgery antiForgery,
             [NotNull] IOptions<MvcOptions> optionsAccessor,

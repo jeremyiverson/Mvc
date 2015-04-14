@@ -48,8 +48,9 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
             // Assert
             var validators = context.Validators;
 
-            var validator = Assert.IsType<CustomModelValidatorAttribute>(Assert.Single(validators));
-            Assert.Equal("Class", validator.Tag);
+            var validator = Assert.Single(validators);
+            var customModelValidator = Assert.IsType<CustomModelValidatorAttribute>(validator);
+            Assert.Equal("Class", customModelValidator.Tag);
         }
 
         [Fact]
@@ -60,7 +61,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
             var validatorProvider = TestModelValidatorProvider.CreateDefaultProvider();
 
             var metadata = metadataProvider.GetMetadataForProperty(
-                typeof(ModelValidatorAttributeOnProperty), 
+                typeof(ModelValidatorAttributeOnProperty),
                 nameof(ModelValidatorAttributeOnProperty.Property));
             var context = new ModelValidatorProviderContext(metadata);
 
