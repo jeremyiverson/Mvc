@@ -19,7 +19,7 @@ namespace Microsoft.AspNet.Mvc.Rendering.Internal
     {
         private static readonly string DisplayTemplateViewPath = "DisplayTemplates";
         private static readonly string EditorTemplateViewPath = "EditorTemplates";
-        public const string IEnumerableOfIFormFileName = "IEnumerable`IFormFile`";
+        public static readonly string IEnumerableOfIFormFileName = "IEnumerable`" + nameof(IFormFile);
 
         private static readonly Dictionary<string, Func<IHtmlHelper, string>> _defaultDisplayActions =
             new Dictionary<string, Func<IHtmlHelper, string>>(StringComparer.OrdinalIgnoreCase)
@@ -141,25 +141,27 @@ namespace Microsoft.AspNet.Mvc.Rendering.Internal
                 metadata.DataTypeName
             };
 
-            foreach (string templateHint in templateHints.Where(s => !string.IsNullOrEmpty(s)))
+            foreach (var templateHint in templateHints.Where(s => !string.IsNullOrEmpty(s)))
             {
                 yield return templateHint;
             }
 
-            var fieldType = _viewData.ModelExplorer.ModelType;
 
             // We don't want to search for Nullable<T>, we want to search for T (which should handle both T and
             // Nullable<T>).
-            fieldType = Nullable.GetUnderlyingType(fieldType) ?? fieldType;
+            var modelType = _viewData.ModelExplorer.ModelType;
+            var fieldType = Nullable.GetUnderlyingType(modelType) ?? modelType;
 
-            foreach (string typeName in GetTypeNames(_viewData.ModelExplorer, fieldType))
+            foreach (var typeName in GetTypeNames(_viewData.ModelExplorer.Metadata, fieldType))
             {
                 yield return typeName;
             }
         }
 
-        public static IEnumerable<string> GetTypeNames(ModelExplorer modelExplorer, Type fieldType)
+        public static IEnumerable<string> GetTypeNames(ModelMetadata modelMetadata, Type fieldType)
         {
+            // Not returning type name here for IEnumerable<IFormFile> since we will be returning
+            // a more specific name, IEnumerableOfIFormFileName.
             if (typeof(IEnumerable<IFormFile>) != fieldType)
             {
                 yield return fieldType.Name;
@@ -170,7 +172,7 @@ namespace Microsoft.AspNet.Mvc.Rendering.Internal
                 // Nothing more to provide
                 yield break;
             }
-            else if (!modelExplorer.Metadata.IsComplexType)
+            else if (!modelMetadata.IsComplexType)
             {
                 // IsEnum is false for the Enum class itself
                 if (fieldType.IsEnum())
@@ -207,6 +209,7 @@ namespace Microsoft.AspNet.Mvc.Rendering.Internal
                 {
                     yield return IEnumerableOfIFormFileName;
 
+                    // Specific name has already been returned, now return the generic name.
                     if (typeof(IEnumerable<IFormFile>) == fieldType)
                     {
                         yield return fieldType.Name;

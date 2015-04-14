@@ -620,35 +620,48 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
             Assert.Equal(expectedTagName, output.TagName);
         }
 
+        public static TheoryData<string, string, string> InputTypeData
+        {
+            get
+            {
+                return new TheoryData<string, string, string>
+                {
+                    { null, null, "text" },
+                    { "Byte", null, "number" },
+                    { null, null, "text" },
+                    { "Byte", null, "number" },
+                    { "custom-datatype", null, "text" },
+                    { "Custom-Datatype", null, "text" },
+                    { "date", null, "date" },                  // No date/time special cases since ModelType is string.
+                    { "datetime", null, "datetime" },
+                    { "datetime-local", null, "datetime-local" },
+                    { "DATETIME-local", null, "datetime-local" },
+                    { "Decimal", "{0:0.00}", "text" },
+                    { "Double", null, "number" },
+                    { "Int16", null, "number" },
+                    { "Int32", null, "number" },
+                    { "int32", null, "number" },
+                    { "Int64", null, "number" },
+                    { "SByte", null, "number" },
+                    { "Single", null, "number" },
+                    { "SINGLE", null, "number" },
+                    { "string", null, "text" },
+                    { "STRING", null, "text" },
+                    { "text", null, "text" },
+                    { "TEXT", null, "text" },
+                    { "time", null, "time" },
+                    { "UInt16", null, "number" },
+                    { "uint16", null, "number" },
+                    { "UInt32", null, "number" },
+                    { "UInt64", null, "number" },
+                    { nameof(IFormFile), null, "file" },
+                    { TemplateRenderer.IEnumerableOfIFormFileName, null, "file" },
+                };
+            }
+        }
+
         [Theory]
-        [InlineData(null, null, "text")]
-        [InlineData("Byte", null, "number")]
-        [InlineData("custom-datatype", null, "text")]
-        [InlineData("Custom-Datatype", null, "text")]
-        [InlineData("date", null, "date")]                  // No date/time special cases since ModelType is string.
-        [InlineData("datetime", null, "datetime")]
-        [InlineData("datetime-local", null, "datetime-local")]
-        [InlineData("DATETIME-local", null, "datetime-local")]
-        [InlineData("Decimal", "{0:0.00}", "text")]
-        [InlineData("Double", null, "number")]
-        [InlineData("Int16", null, "number")]
-        [InlineData("Int32", null, "number")]
-        [InlineData("int32", null, "number")]
-        [InlineData("Int64", null, "number")]
-        [InlineData("SByte", null, "number")]
-        [InlineData("Single", null, "number")]
-        [InlineData("SINGLE", null, "number")]
-        [InlineData("string", null, "text")]
-        [InlineData("STRING", null, "text")]
-        [InlineData("text", null, "text")]
-        [InlineData("TEXT", null, "text")]
-        [InlineData("time", null, "time")]
-        [InlineData("UInt16", null, "number")]
-        [InlineData("uint16", null, "number")]
-        [InlineData("UInt32", null, "number")]
-        [InlineData("UInt64", null, "number")]
-        [InlineData(nameof(IFormFile), null, "file")]
-        [InlineData(TemplateRenderer.IEnumerableOfIFormFileName, null, "file")]
+        [MemberData(nameof(InputTypeData))]
         public async Task ProcessAsync_CallsGenerateTextBox_AddsExpectedAttributes(
             string dataTypeName,
             string expectedFormat,
@@ -693,15 +706,15 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
                 };
             }
             htmlGenerator
-            .Setup(mock => mock.GenerateTextBox(
-                tagHelper.ViewContext,
-                tagHelper.For.ModelExplorer,
-                tagHelper.For.Name,
-                null,                                   // value
-                expectedFormat,
-                htmlAttributes ?? null))                // htmlAttributes
-            .Returns(tagBuilder)
-            .Verifiable();
+                .Setup(mock => mock.GenerateTextBox(
+                    tagHelper.ViewContext,
+                    tagHelper.For.ModelExplorer,
+                    tagHelper.For.Name,
+                    null,                                   // value
+                    expectedFormat,
+                    htmlAttributes ?? null))                // htmlAttributes
+                .Returns(tagBuilder)
+                .Verifiable();
 
             // Act
             await tagHelper.ProcessAsync(context, output);

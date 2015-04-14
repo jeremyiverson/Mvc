@@ -358,10 +358,14 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
             var fieldType = modelExplorer.ModelType;
             if (typeof(bool?) != fieldType)
             {
-                fieldType = Nullable.GetUnderlyingType(fieldType) ?? fieldType;
+                var underlyingType = Nullable.GetUnderlyingType(fieldType);
+                if (underlyingType != null)
+                {
+                    fieldType = underlyingType;
+                }
             }
 
-            foreach (string typeName in TemplateRenderer.GetTypeNames(modelExplorer, fieldType))
+            foreach (string typeName in TemplateRenderer.GetTypeNames(modelExplorer.Metadata, fieldType))
             {
                 yield return typeName;
             }
