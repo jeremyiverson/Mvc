@@ -17,9 +17,9 @@ namespace Microsoft.AspNet.Mvc.Rendering.Internal
 {
     public class TemplateRenderer
     {
-        private static readonly string DisplayTemplateViewPath = "DisplayTemplates";
-        private static readonly string EditorTemplateViewPath = "EditorTemplates";
-        public static readonly string IEnumerableOfIFormFileName = "IEnumerable`" + nameof(IFormFile);
+        private const string DisplayTemplateViewPath = "DisplayTemplates";
+        private const string EditorTemplateViewPath = "EditorTemplates";
+        public const string IEnumerableOfIFormFileName = "IEnumerable`" + nameof(IFormFile);
 
         private static readonly Dictionary<string, Func<IHtmlHelper, string>> _defaultDisplayActions =
             new Dictionary<string, Func<IHtmlHelper, string>>(StringComparer.OrdinalIgnoreCase)
@@ -145,7 +145,6 @@ namespace Microsoft.AspNet.Mvc.Rendering.Internal
             {
                 yield return templateHint;
             }
-
 
             // We don't want to search for Nullable<T>, we want to search for T (which should handle both T and
             // Nullable<T>).

@@ -712,7 +712,7 @@ namespace Microsoft.AspNet.Mvc.TagHelpers
                     tagHelper.For.Name,
                     null,                                   // value
                     expectedFormat,
-                    htmlAttributes ?? null))                // htmlAttributes
+                    htmlAttributes))                // htmlAttributes
                 .Returns(tagBuilder)
                 .Verifiable();
 
